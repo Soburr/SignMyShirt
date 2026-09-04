@@ -53,6 +53,8 @@
 </template>
 
 <script setup>
+defineOptions({ layout: null });
+
 import { reactive, ref } from 'vue';
 import { router } from '@inertiajs/vue3';
 import ShirtCanvas from '../components/ShirtCanvas.vue';
@@ -120,22 +122,34 @@ function submit() {
 </script>
 
 <style scoped>
-.create-page { max-width: 420px; margin: 0 auto; padding: 1.5rem 1rem; }
+.create-page {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  background: #ffffff;
+  color: #1d1d1d;
+  min-height: 100vh;
+}
 .create-page__hint { color: #666; font-size: 14px; margin-bottom: 1rem; }
 .create-page__tabs { display: flex; gap: 8px; margin-bottom: 12px; }
-.create-page__tabs button { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #d8d8d8; background: #fff; }
-.create-page__tabs button.active { border-color: #1d1d1d; font-weight: 600; }
+.create-page__tabs button {
+  flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #d8d8d8;
+  background: #fff; color: #1d1d1d; cursor: pointer;
+}
+.create-page__tabs button.active { border-color: #1a7a3c; color: #1a7a3c; font-weight: 600; }
 .create-page__place-btn {
   width: 100%; margin-top: 10px; padding: 8px; border-radius: 8px;
-  border: 1px dashed #999; background: #fafafa; cursor: pointer;
+  border: 1px dashed #1a7a3c; background: #f2faf5; color: #1a7a3c; cursor: pointer;
 }
 .create-page__field { margin-top: 14px; }
 .create-page__field label { display: block; font-size: 13px; color: #444; margin-bottom: 4px; }
-.create-page__field input[type="text"] { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #d8d8d8; }
+.create-page__field input[type="text"] {
+  width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #d8d8d8; color: #1d1d1d;
+}
 .create-page__error { color: #b3261e; font-size: 13px; margin-top: 12px; }
 .create-page__submit {
   width: 100%; padding: 12px; margin-top: 16px; border-radius: 8px;
-  border: none; background: #1d1d1d; color: #fff; font-weight: 600; cursor: pointer;
+  border: none; background: #1a7a3c; color: #fff; font-weight: 600; cursor: pointer;
 }
 .create-page__submit:disabled { opacity: 0.6; }
 </style>
