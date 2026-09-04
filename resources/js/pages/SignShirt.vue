@@ -37,32 +37,32 @@
 </template>
 
 <script setup>
+defineOptions({ layout: null });
+
 import { ref, computed, nextTick } from 'vue';
-import axios from 'axios';
 import ShirtCanvas from '../components/ShirtCanvas.vue';
 import SignatureModePicker from '../components/SignatureModePicker.vue';
 
+// The shirt (with its signatures already loaded) is passed straight in by
+// the GET /shirts/{shirt} route, which renders this page via Inertia.
 const props = defineProps({
-  shirtUuid: { type: String, required: true },
+  shirt: { type: Object, required: true },
 });
 
-const shirt = ref({ signatures: [] });
+// plain local binding so the template can reference `shirt` directly
+const shirt = props.shirt;
+
+const signatures = ref(props.shirt.signatures || []);
 const side = ref('front');
 const placing = ref(false);
-const pendingSpot = ref(null);
+const pendingSpot = ref(null); // { x, y } in percentages, once chosen
 const submitting = ref(false);
 const picker = ref(null);
 const pickerSection = ref(null);
 
 const signaturesForSide = computed(() =>
-  (shirt.value.signatures || []).filter(s => s.side === side.value)
+  signatures.value.filter(s => s.side === side.value)
 );
-
-async function loadShirt() {
-  const { data } = await axios.get(`/api/shirts/${props.shirtUuid}`);
-  shirt.value = data;
-}
-loadShirt();
 
 function startSigning() {
   placing.value = true;
@@ -77,15 +77,29 @@ async function onPlace({ x, y }) {
 
 async function submitSignature() {
   const data = picker.value.getSignatureData();
-  if (!data) return; 
+  if (!data) return; // picker already shows its own inline error
 
   submitting.value = true;
   try {
-    const { data: signature } = await axios.post(
-      `/api/shirts/${props.shirtUuid}/signatures`,
-      { ...data, side: side.value, x: pendingSpot.value.x, y: pendingSpot.value.y }
-    );
-    shirt.value.signatures.push(signature);
+    const response = await fetch(`/shirts/${props.shirt.uuid}/signatures`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+      },
+      body: JSON.stringify({
+        ...data,
+        side: side.value,
+        x: pendingSpot.value.x,
+        y: pendingSpot.value.y,
+      }),
+    });
+
+    if (!response.ok) throw new Error('Failed to save signature');
+
+    const signature = await response.json();
+    signatures.value.push(signature);
     placing.value = false;
     pendingSpot.value = null;
   } finally {

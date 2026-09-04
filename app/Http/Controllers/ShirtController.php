@@ -14,7 +14,7 @@ class ShirtController extends Controller
 
             'front_text' => 'nullable|string|max:120',
             'front_text_color' => 'nullable|string|max:20',
-            'front_image' => 'nullable|image|max:2048', 
+            'front_image' => 'nullable|image|max:2048', // 2MB
             'front_x' => 'nullable|numeric|min:0|max:100',
             'front_y' => 'nullable|numeric|min:0|max:100',
             'front_width' => 'nullable|numeric|min:0|max:100',
@@ -39,16 +39,6 @@ class ShirtController extends Controller
 
         $shirt = Shirt::create($validated);
 
-        return response()->json([
-            'uuid' => $shirt->uuid,
-            'share_url' => url("/shirt/{$shirt->uuid}"),
-        ], 201);
-    }
-
-    public function show(Shirt $shirt)
-    {
-        return response()->json(
-            $shirt->load('signatures')
-        );
+        return redirect()->route('shirts.show', $shirt);
     }
 }
