@@ -1,14 +1,13 @@
-export const VIEW_BOX = '0 0 220 260';
+export const VIEW_BOX = '0 0 260 220';
 
 export const SHIRT_PATHS = {
-  front: 'M70 26 L95 12 Q110 22 125 12 L150 26 L182 46 L166 74 L150 62 ' +
-         'L150 236 L70 236 L70 62 L54 74 L38 46 Z',
-  back: 'M70 22 L150 22 L182 46 L166 74 L150 62 ' +
-        'L150 236 L70 236 L70 62 L54 74 L38 46 Z',
+  front: 'M95 22 Q130 34 165 22 L190 30 Q215 40 210 60 Q205 78 185 70 ' +
+         'L185 200 L75 200 L75 70 Q55 78 50 60 Q45 40 70 30 Z',
+  back: 'M95 20 L165 20 L190 30 Q215 40 210 60 Q205 78 185 70 ' +
+        'L185 200 L75 200 L75 70 Q55 78 50 60 Q45 40 70 30 Z',
 };
 
 /**
- *
  * @param {number} xPct
  * @param {number} yPct
  * @param {'front'|'back'} side
@@ -27,8 +26,8 @@ export function isInsideShirt(xPct, yPct, side) {
   document.body.appendChild(svg);
 
   const point = svg.createSVGPoint();
-  point.x = (xPct / 100) * 220;
-  point.y = (yPct / 100) * 260;
+  point.x = (xPct / 100) * 260;
+  point.y = (yPct / 100) * 220;
 
   const inside = path.isPointInFill(point);
   document.body.removeChild(svg);

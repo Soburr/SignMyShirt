@@ -75,6 +75,15 @@ async function onPlace({ x, y }) {
   pickerSection.value?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
+// Laravel sets an encrypted XSRF-TOKEN cookie on every response by default
+// (via the VerifyCsrfToken middleware); reading it directly means signature
+// submission works without depending on a <meta name="csrf-token"> tag
+// existing in the page head.
+function getCsrfTokenFromCookie() {
+  const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : '';
+}
+
 async function submitSignature() {
   const data = picker.value.getSignatureData();
   if (!data) return; // picker already shows its own inline error
@@ -83,10 +92,11 @@ async function submitSignature() {
   try {
     const response = await fetch(`/shirts/${props.shirt.uuid}/signatures`, {
       method: 'POST',
+      credentials: 'same-origin', // ensures the session/XSRF cookies are sent
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+        'X-XSRF-TOKEN': getCsrfTokenFromCookie(),
       },
       body: JSON.stringify({
         ...data,
