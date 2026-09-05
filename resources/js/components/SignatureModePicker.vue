@@ -34,7 +34,7 @@
       <div class="mode-picker__pad-wrap">
         <svg
           ref="pad"
-          viewBox="0 0 260 120"
+          :viewBox="`${-PAD_WIDTH / 2} ${-PAD_HEIGHT / 2} ${PAD_WIDTH} ${PAD_HEIGHT}`"
           class="mode-picker__pad"
           @pointerdown="startStroke"
           @pointermove="continueStroke"
@@ -46,7 +46,7 @@
             :key="i"
             :d="d"
             :stroke="color"
-            stroke-width="2.5"
+            stroke-width="1"
             fill="none"
             stroke-linecap="round"
           />
@@ -54,7 +54,7 @@
             v-if="currentStroke"
             :d="currentStroke"
             :stroke="color"
-            stroke-width="2.5"
+            stroke-width="1"
             fill="none"
             stroke-linecap="round"
           />
@@ -80,6 +80,16 @@ const color = ref('#1a7a3c');
 const typedText = ref('');
 const error = ref('');
 
+// The drawing pad represents a small, fixed-size box in the SAME unit
+// scale as the shirt's own coordinate system (see shirtPaths.js viewBox).
+// Coordinates are centered on (0,0) - not the pad's top-left corner -
+// so a stroke always lands right around wherever the signer tapped on
+// the shirt, regardless of where on the physical pad they drew it.
+const PAD_WIDTH = 50;
+const PAD_HEIGHT = 24;
+
+// Free-hand drawing: each finished stroke becomes one SVG path string;
+// combined into one drawn_path (space-joined) on submit.
 const strokes = reactive([]);
 const currentStroke = ref('');
 let drawing = false;
@@ -106,8 +116,8 @@ function endStroke() {
 function padPoint(event) {
   const rect = event.currentTarget.getBoundingClientRect();
   return {
-    x: Math.round(((event.clientX - rect.left) / rect.width) * 260),
-    y: Math.round(((event.clientY - rect.top) / rect.height) * 120),
+    x: (((event.clientX - rect.left) / rect.width) * PAD_WIDTH - PAD_WIDTH / 2).toFixed(1),
+    y: (((event.clientY - rect.top) / rect.height) * PAD_HEIGHT - PAD_HEIGHT / 2).toFixed(1),
   };
 }
 
@@ -116,7 +126,10 @@ function clearDrawing() {
   currentStroke.value = '';
 }
 
-
+/**
+ * Called by the parent right before placing the signature on the shirt.
+ * Returns null (and sets an inline error) if nothing usable was entered.
+ */
 function getSignatureData() {
   error.value = '';
 

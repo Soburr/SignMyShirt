@@ -10,6 +10,9 @@
     </div>
 
     <h1 class="sign-page__title">Sign this shirt</h1>
+    <a href="/shirts/create" class="sign-page__create-own">
+      ✨ Want your own? Create a sign-out shirt →
+    </a>
 
     <p class="sign-page__step-label">Step 1 · Choose a side</p>
     <div class="sign-page__tabs">
@@ -30,8 +33,6 @@
       :design-image-path="shirt[`${side}_image_path`]"
       :design-x="shirt[`${side}_x`] ?? 50"
       :design-y="shirt[`${side}_y`] ?? 50"
-      :design-width="shirt[`${side}_width`] ?? 30"
-      :design-height="shirt[`${side}_height`] ?? 20"
       @place="onPlace"
     />
 
@@ -48,6 +49,7 @@
       <button class="sign-page__submit" @click="submitSignature" :disabled="submitting">
         {{ submitting ? 'Placing…' : '✓ Place my signature' }}
       </button>
+      <p v-if="submitError" class="sign-page__submit-error">⚠️ {{ submitError }}</p>
     </div>
   </div>
 </template>
@@ -103,6 +105,7 @@ const side = ref('front');
 const placing = ref(false);
 const pendingSpot = ref(null); // { x, y } in percentages, once chosen
 const submitting = ref(false);
+const submitError = ref('');
 const picker = ref(null);
 const pickerSection = ref(null);
 
@@ -135,6 +138,7 @@ async function submitSignature() {
   if (!data) return; // picker already shows its own inline error
 
   submitting.value = true;
+  submitError.value = '';
   try {
     const response = await fetch(`/shirts/${props.shirt.uuid}/signatures`, {
       method: 'POST',
@@ -152,12 +156,19 @@ async function submitSignature() {
       }),
     });
 
-    if (!response.ok) throw new Error('Failed to save signature');
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      const firstError = body?.errors ? Object.values(body.errors)[0]?.[0] : null;
+      throw new Error(firstError || body?.message || `Request failed (${response.status})`);
+    }
 
     const signature = await response.json();
     signatures.value.push(signature);
     placing.value = false;
     pendingSpot.value = null;
+  } catch (err) {
+    submitError.value = err.message;
+    console.error('Signature submission failed:', err);
   } finally {
     submitting.value = false;
   }
@@ -185,6 +196,11 @@ async function submitSignature() {
   background: #1a7a3c; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;
 }
 .sign-page__title { font-size: 22px; margin: 0 0 4px; }
+.sign-page__create-own {
+  display: inline-block; font-size: 13px; color: #1a7a3c; text-decoration: none;
+  font-weight: 500; margin-bottom: 16px;
+}
+.sign-page__create-own:hover { text-decoration: underline; }
 .sign-page__step-label {
   font-size: 12px; font-weight: 700; letter-spacing: 0.03em;
   text-transform: uppercase; color: #1a7a3c; margin: 16px 0 8px;
@@ -204,5 +220,6 @@ async function submitSignature() {
   text-align: center; color: #1a7a3c; font-size: 14px; margin-top: 10px;
   background: #f2faf5; padding: 10px; border-radius: 8px;
 }
+.sign-page__submit-error { color: #b3261e; font-size: 13px; margin-top: 8px; text-align: center; }
 .sign-page__picker { margin-top: 1.5rem; border-top: 1px solid #eee; padding-top: 1rem; }
 </style>
