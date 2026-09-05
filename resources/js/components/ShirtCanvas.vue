@@ -7,8 +7,10 @@
         </clipPath>
       </defs>
 
+      <!-- base shirt fill and outline -->
       <path :d="shirtPath" class="shirt-canvas__outline" />
 
+      <!-- every signer's mark, clipped so nothing spills past the fabric edge -->
       <g :clip-path="`url(#${clipId})`">
         <g
           v-for="sig in signatures"
@@ -34,22 +36,26 @@
         </g>
       </g>
 
-      <g v-if="designText || designImagePath" :transform="`translate(${toX(designX)} ${toY(designY)})`">
+      <!-- creator's text: user-placed, wherever they tapped -->
+      <g v-if="designText" :transform="`translate(${toX(designX)} ${toY(designY)})`">
         <text
-          v-if="designText"
           :fill="designTextColor || 'var(--text-primary)'"
           font-size="11"
           text-anchor="middle"
         >{{ designText }}</text>
-        <image
-          v-if="designImagePath"
-          :href="designImagePath"
-          :width="(designWidth / 100) * 220"
-          :height="(designHeight / 100) * 260"
-          :x="-(designWidth / 100) * 110"
-          :y="-(designHeight / 100) * 130"
-        />
       </g>
+
+      <!-- creator's image: always centered on the chest, fixed box.
+           SVG <image> defaults to preserveAspectRatio="xMidYMid meet",
+           so it scales to fit this box without ever stretching. -->
+      <image
+        v-if="designImagePath"
+        :href="designImagePath"
+        :x="toX(IMAGE_BOX.x - IMAGE_BOX.width / 2)"
+        :y="toY(IMAGE_BOX.y - IMAGE_BOX.height / 2)"
+        :width="toX(IMAGE_BOX.width)"
+        :height="toY(IMAGE_BOX.height)"
+      />
     </svg>
   </div>
 </template>
@@ -59,35 +65,50 @@ import { computed } from 'vue';
 import { SHIRT_PATHS, VIEW_BOX } from '../shirtPaths';
 
 const props = defineProps({
-  side: { type: String, required: true },
+  side: { type: String, required: true }, // 'front' | 'back'
   signatures: { type: Array, default: () => [] },
-  placing: { type: Boolean, default: false }, 
+  placing: { type: Boolean, default: false }, // true while a signer is choosing a spot
 
   designText: { type: String, default: '' },
   designTextColor: { type: String, default: '' },
-  designImagePath: { type: String, default: '' },
-  designX: { type: Number, default: 50 },
+  designX: { type: Number, default: 50 }, // text position only - user-placed
   designY: { type: Number, default: 50 },
-  designWidth: { type: Number, default: 30 }, 
-  designHeight: { type: Number, default: 20 },
+  designImagePath: { type: String, default: '' },
 });
+
+// Fixed chest position/size for any uploaded image - never user-placed,
+// always centered, always scaled proportionately within this box.
+const IMAGE_BOX = { x: 50, y: 42, width: 34, height: 24 };
 
 const emit = defineEmits(['place']);
 
 const clipId = computed(() => `shirt-clip-${props.side}`);
 const shirtPath = computed(() => SHIRT_PATHS[props.side]);
 
-function toX(pct) { return (pct / 100) * 220; }
-function toY(pct) { return (pct / 100) * 260; }
+function toX(pct) { return (pct / 100) * 260; }
+function toY(pct) { return (pct / 100) * 220; }
 
+// A signature "recedes" (lower opacity) when it falls within the text's
+// small footprint or the image's fixed chest box - checked independently
+// since they can each exist without the other.
 function overlapsDesign(sig) {
-  if (!props.designText && !props.designImagePath) return false;
-  const halfW = props.designWidth / 2;
-  const halfH = props.designHeight / 2;
-  return (
-    sig.x > props.designX - halfW && sig.x < props.designX + halfW &&
-    sig.y > props.designY - halfH && sig.y < props.designY + halfH
-  );
+  if (props.designText) {
+    const halfW = 12, halfH = 6; // small fixed footprint around the text point
+    if (
+      sig.x > props.designX - halfW && sig.x < props.designX + halfW &&
+      sig.y > props.designY - halfH && sig.y < props.designY + halfH
+    ) return true;
+  }
+
+  if (props.designImagePath) {
+    const halfW = IMAGE_BOX.width / 2, halfH = IMAGE_BOX.height / 2;
+    if (
+      sig.x > IMAGE_BOX.x - halfW && sig.x < IMAGE_BOX.x + halfW &&
+      sig.y > IMAGE_BOX.y - halfH && sig.y < IMAGE_BOX.y + halfH
+    ) return true;
+  }
+
+  return false;
 }
 
 function handleClick(event) {
@@ -104,7 +125,7 @@ function handleClick(event) {
   const path = svg.querySelector('.shirt-canvas__outline');
 
   if (!path.isPointInFill(point)) {
-    return;
+    return; // ignore taps outside the shirt silhouette
   }
 
   emit('place', { x: xPct, y: yPct });
