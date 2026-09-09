@@ -43,7 +43,6 @@
       👆 Tap anywhere on the {{ side }} of the shirt to choose your spot
     </p>
 
-    <!-- section below the shirt: appears once a spot has been picked -->
     <div v-if="pendingSpot" ref="pickerSection" class="sign-page__picker">
       <SignatureModePicker ref="picker" />
       <button class="sign-page__submit" @click="submitSignature" :disabled="submitting">
@@ -61,14 +60,11 @@ import { ref, computed, nextTick } from 'vue';
 import ShirtCanvas from '../components/ShirtCanvas.vue';
 import SignatureModePicker from '../components/SignatureModePicker.vue';
 
-// The shirt (with its signatures already loaded) is passed straight in by
-// the GET /shirts/{shirt} route, which renders this page via Inertia.
 const props = defineProps({
   shirt: { type: Object, required: true },
   justCreated: { type: Boolean, default: false },
 });
 
-// plain local binding so the template can reference `shirt` directly
 const shirt = props.shirt;
 const justCreated = props.justCreated;
 const shareUrl = window.location.href;
@@ -80,9 +76,6 @@ function copyLink() {
     return;
   }
 
-  // navigator.clipboard only exists on HTTPS or localhost - fall back to the
-  // older execCommand method for plain http:// custom domains (e.g. Herd's
-  // .test domains without SSL enabled).
   const input = document.createElement('textarea');
   input.value = shareUrl;
   input.style.position = 'fixed';
@@ -103,7 +96,7 @@ function showCopied() {
 const signatures = ref(props.shirt.signatures || []);
 const side = ref('front');
 const placing = ref(false);
-const pendingSpot = ref(null); // { x, y } in percentages, once chosen
+const pendingSpot = ref(null); 
 const submitting = ref(false);
 const submitError = ref('');
 const picker = ref(null);
@@ -124,10 +117,6 @@ async function onPlace({ x, y }) {
   pickerSection.value?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-// Laravel sets an encrypted XSRF-TOKEN cookie on every response by default
-// (via the VerifyCsrfToken middleware); reading it directly means signature
-// submission works without depending on a <meta name="csrf-token"> tag
-// existing in the page head.
 function getCsrfTokenFromCookie() {
   const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]*)/);
   return match ? decodeURIComponent(match[1]) : '';
@@ -135,14 +124,14 @@ function getCsrfTokenFromCookie() {
 
 async function submitSignature() {
   const data = picker.value.getSignatureData();
-  if (!data) return; // picker already shows its own inline error
+  if (!data) return;
 
   submitting.value = true;
   submitError.value = '';
   try {
     const response = await fetch(`/shirts/${props.shirt.uuid}/signatures`, {
       method: 'POST',
-      credentials: 'same-origin', // ensures the session/XSRF cookies are sent
+      credentials: 'same-origin',
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',

@@ -7,10 +7,8 @@
         </clipPath>
       </defs>
 
-      <!-- base shirt fill and outline -->
       <path :d="shirtPath" class="shirt-canvas__outline" />
 
-      <!-- every signer's mark, clipped so nothing spills past the fabric edge -->
       <g :clip-path="`url(#${clipId})`">
         <g
           v-for="sig in signatures"
@@ -36,7 +34,6 @@
         </g>
       </g>
 
-      <!-- creator's text: user-placed, wherever they tapped -->
       <g v-if="designText" :transform="`translate(${toX(designX)} ${toY(designY)})`">
         <text
           :fill="designTextColor || 'var(--text-primary)'"
@@ -45,9 +42,6 @@
         >{{ designText }}</text>
       </g>
 
-      <!-- creator's image: always centered on the chest, fixed box.
-           SVG <image> defaults to preserveAspectRatio="xMidYMid meet",
-           so it scales to fit this box without ever stretching. -->
       <image
         v-if="designImagePath"
         :href="designImagePath"
@@ -65,19 +59,17 @@ import { computed } from 'vue';
 import { SHIRT_PATHS, VIEW_BOX } from '../shirtPaths';
 
 const props = defineProps({
-  side: { type: String, required: true }, // 'front' | 'back'
+  side: { type: String, required: true }, 
   signatures: { type: Array, default: () => [] },
-  placing: { type: Boolean, default: false }, // true while a signer is choosing a spot
+  placing: { type: Boolean, default: false },
 
   designText: { type: String, default: '' },
   designTextColor: { type: String, default: '' },
-  designX: { type: Number, default: 50 }, // text position only - user-placed
+  designX: { type: Number, default: 50 }, 
   designY: { type: Number, default: 50 },
   designImagePath: { type: String, default: '' },
 });
 
-// Fixed chest position/size for any uploaded image - never user-placed,
-// always centered, always scaled proportionately within this box.
 const IMAGE_BOX = { x: 50, y: 42, width: 34, height: 24 };
 
 const emit = defineEmits(['place']);
@@ -88,12 +80,10 @@ const shirtPath = computed(() => SHIRT_PATHS[props.side]);
 function toX(pct) { return (pct / 100) * 260; }
 function toY(pct) { return (pct / 100) * 220; }
 
-// A signature "recedes" (lower opacity) when it falls within the text's
-// small footprint or the image's fixed chest box - checked independently
-// since they can each exist without the other.
+
 function overlapsDesign(sig) {
   if (props.designText) {
-    const halfW = 12, halfH = 6; // small fixed footprint around the text point
+    const halfW = 12, halfH = 6;
     if (
       sig.x > props.designX - halfW && sig.x < props.designX + halfW &&
       sig.y > props.designY - halfH && sig.y < props.designY + halfH
@@ -125,7 +115,7 @@ function handleClick(event) {
   const path = svg.querySelector('.shirt-canvas__outline');
 
   if (!path.isPointInFill(point)) {
-    return; // ignore taps outside the shirt silhouette
+    return;
   }
 
   emit('place', { x: xPct, y: yPct });

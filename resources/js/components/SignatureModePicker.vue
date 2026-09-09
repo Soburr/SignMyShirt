@@ -80,16 +80,9 @@ const color = ref('#1a7a3c');
 const typedText = ref('');
 const error = ref('');
 
-// The drawing pad represents a small, fixed-size box in the SAME unit
-// scale as the shirt's own coordinate system (see shirtPaths.js viewBox).
-// Coordinates are centered on (0,0) - not the pad's top-left corner -
-// so a stroke always lands right around wherever the signer tapped on
-// the shirt, regardless of where on the physical pad they drew it.
 const PAD_WIDTH = 50;
 const PAD_HEIGHT = 24;
 
-// Free-hand drawing: each finished stroke becomes one SVG path string;
-// combined into one drawn_path (space-joined) on submit.
 const strokes = reactive([]);
 const currentStroke = ref('');
 let drawing = false;
@@ -126,10 +119,6 @@ function clearDrawing() {
   currentStroke.value = '';
 }
 
-/**
- * Called by the parent right before placing the signature on the shirt.
- * Returns null (and sets an inline error) if nothing usable was entered.
- */
 function getSignatureData() {
   error.value = '';
 

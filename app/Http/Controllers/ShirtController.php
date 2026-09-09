@@ -8,13 +8,7 @@ use Illuminate\Support\Facades\Storage;
 
 class ShirtController extends Controller
 {
-    /**
-     * Create a new shirt. Front/back text and image are both optional,
-     * independently, on each side - this is the creator's one-time design step.
-     * Images are always centered on the chest and scaled proportionately
-     * (handled entirely in ShirtCanvas.vue), so no position is stored for them.
-     * Text keeps a user-chosen x/y since it can be placed anywhere.
-     */
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -45,8 +39,6 @@ class ShirtController extends Controller
 
         $shirt = Shirt::create($validated);
 
-        // Flash a one-time flag so the sign page can show a success banner
-        // with the share link, right after creation only - not on later visits.
         return redirect()->route('shirts.show', $shirt)->with('justCreated', true);
     }
 }

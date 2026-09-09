@@ -28,8 +28,6 @@ void createInertiaApp({
     },
 });
 
-// This will set light / dark mode on page load...
 initializeTheme();
 
-// This will listen for flash toast data from the server...
 initializeFlashToast();
